@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Idea Puzzle</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f6fb;
+        --sidebar: #1f2937;
+        --sidebar-accent: #374151;
+        --topbar: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        width: 180px;
+        background: var(--sidebar);
+        color: #f9fafb;
+        padding: 20px 12px;
+      }
+
+      .brand {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 24px;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .nav-links a {
+        color: #d1d5db;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        background: var(--sidebar-accent);
+        color: #ffffff;
+      }
+
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: var(--topbar);
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .topbar-title {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .topbar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-btn {
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        color: var(--text);
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .icon-btn:hover {
+        background: #e5e7eb;
+      }
+
+      .content {
+        padding: 24px;
+        flex: 1;
+      }
+
+      .board {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 480px;
+        border: none;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #fffdf5 0%, #fef2f2 45%, #eef7ff 100%);
+        overflow: hidden;
+        cursor: grab;
+      }
+
+      .board.dragging {
+        cursor: grabbing;
+      }
+
+      .board::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+        background-size: 24px 24px;
+        pointer-events: none;
+      }
+
+      .board-content {
+        position: absolute;
+        width: 5000px;
+        height: 5000px;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+
+      .board-viewport {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .sticky-note {
+        position: absolute;
+        width: 140px;
+        height: 120px;
+        padding: 12px;
+        background: #fde68a;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: #4b5563;
+        cursor: grab;
+        user-select: none;
+        transform: rotate(-2deg);
+      }
+
+      .sticky-note.question {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+      }
+
+      .sticky-note:active {
+        cursor: grabbing;
+      }
+      .sticky-note.selected {
+        box-shadow: 0 12px 30px rgba(59,130,246,0.18);
+        outline: 3px solid rgba(59,130,246,0.35);
+        transform: rotate(0deg);
+      }
+
+      .note-text {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        outline: none;
+        cursor: text;
+      }
+
+      .marquee {
+        position: absolute;
+        border: 2px dashed rgba(59,130,246,0.6);
+        background: rgba(59,130,246,0.08);
+        pointer-events: none;
+        z-index: 9999;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">Idea Puzzle</div>
+        <nav class="nav-links">
+          <a href="#" id="word-item">단어</a>
+          <a href="#" id="question-item">질문</a>
+          <a href="#">메모</a>
+          <a href="#">캘린더</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-title">대시보드</div>
+          <div class="topbar-actions">
+            <button class="icon-btn" aria-label="파일">☰</button>
+            <button class="icon-btn" aria-label="설정">⚙</button>
+          </div>
+        </header>
+
+        <section class="content">
+          <div class="board" id="board">
+            <div class="board-viewport">
+              <div class="board-content" id="board-content"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const wordItem = document.getElementById('word-item');
+      const questionItem = document.getElementById('question-item');
+      const board = document.getElementById('board');
+      const boardContent = document.getElementById('board-content');
+
+      const boardWidth = 5000;
+      const boardHeight = 5000;
+      const notes = [];
+      const camera = { x: 0, y: 0, scale: 1 };
+      let draggedNote = null;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      let panning = false;
+      let panStartX = 0;
+      let panStartY = 0;
+      let panOriginX = 0;
+      let panOriginY = 0;
+      const selected = new Set();
+      let dragStartPoint = null;
+      const initialPositions = new Map();
+      let marquee = null;
+      let marqueeStart = null;
+      let isMarquee = false;
+      let marqueeAdd = false;
+      let potentialPan = false;
+      const panThreshold = 6;
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function clampCamera() {
+        const rect = board.getBoundingClientRect();
+        const vw = rect.width;
+        const vh = rect.height;
+        const scaledW = boardWidth * camera.scale;
+        const scaledH = boardHeight * camera.scale;
+
+        if (scaledW <= vw) {
+          camera.x = (vw - scaledW) / 2;
+        } else {
+          const minX = vw - scaledW;
+          camera.x = clamp(camera.x, minX, 0);
+        }
+
+        if (scaledH <= vh) {
+          camera.y = (vh - scaledH) / 2;
+        } else {
+          const minY = vh - scaledH;
+          camera.y = clamp(camera.y, minY, 0);
+        }
+      }
+
+      function updateBoardTransform() {
+        clampCamera();
+        boardContent.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
+      }
+
+      function screenToBoardPoint(event) {
+        const rect = board.getBoundingClientRect();
+        return {
+          x: (event.clientX - rect.left - camera.x) / camera.scale,
+          y: (event.clientY - rect.top - camera.y) / camera.scale,
+        };
+      }
+
+      function viewportCenterToBoardPoint() {
+        const rect = board.getBoundingClientRect();
+        return {
+          x: (rect.width / 2 - camera.x) / camera.scale,
+          y: (rect.height / 2 - camera.y) / camera.scale,
+        };
+      }
+
+      function setNotePosition(note, x, y) {
+        const maxX = Math.max(0, boardWidth - note.offsetWidth - 12);
+        const maxY = Math.max(0, boardHeight - note.offsetHeight - 12);
+        const nextX = clamp(x, 12, maxX);
+        const nextY = clamp(y, 12, maxY);
+
+        note.dataset.x = nextX;
+        note.dataset.y = nextY;
+        note.style.left = `${nextX}px`;
+        note.style.top = `${nextY}px`;
+      }
+
+      function clearSelection() {
+        for (const n of Array.from(selected)) {
+          n.classList.remove('selected');
+        }
+        selected.clear();
+      }
+
+      function addToSelection(note) {
+        selected.add(note);
+        note.classList.add('selected');
+      }
+
+      function removeFromSelection(note) {
+        selected.delete(note);
+        note.classList.remove('selected');
+      }
+
+      function startPan(event) {
+        panning = true;
+        board.classList.add('dragging');
+        panStartX = event.clientX;
+        panStartY = event.clientY;
+        panOriginX = camera.x;
+        panOriginY = camera.y;
+      }
+
+      function startMarquee(event) {
+        isMarquee = true;
+        marqueeAdd = event.shiftKey === true;
+        marqueeStart = screenToBoardPoint(event);
+        marquee = document.createElement('div');
+        marquee.className = 'marquee';
+        marquee.style.left = `${marqueeStart.x}px`;
+        marquee.style.top = `${marqueeStart.y}px`;
+        marquee.style.width = `0px`;
+        marquee.style.height = `0px`;
+        boardContent.appendChild(marquee);
+      }
+
+      function updateMarquee(event) {
+        if (!isMarquee) return;
+        const p = screenToBoardPoint(event);
+        const x = Math.min(marqueeStart.x, p.x);
+        const y = Math.min(marqueeStart.y, p.y);
+        const w = Math.abs(p.x - marqueeStart.x);
+        const h = Math.abs(p.y - marqueeStart.y);
+        marquee.style.left = `${x}px`;
+        marquee.style.top = `${y}px`;
+        marquee.style.width = `${w}px`;
+        marquee.style.height = `${h}px`;
+      }
+
+      function endMarquee() {
+        if (!isMarquee) return;
+        const start = { x: parseFloat(marquee.style.left), y: parseFloat(marquee.style.top) };
+        const end = { x: start.x + parseFloat(marquee.style.width), y: start.y + parseFloat(marquee.style.height) };
+        if (!marqueeAdd) clearSelection();
+        for (const n of notes) {
+          const nx = Number(n.dataset.x || 0);
+          const ny = Number(n.dataset.y || 0);
+          if (nx >= start.x && nx <= end.x && ny >= start.y && ny <= end.y) {
+            addToSelection(n);
+          }
+        }
+        marquee.remove();
+        marquee = null;
+        isMarquee = false;
+        marqueeAdd = false;
+      }
+
+      function updatePan(event) {
+        if (!panning) return;
+        camera.x = panOriginX + (event.clientX - panStartX);
+        camera.y = panOriginY + (event.clientY - panStartY);
+        updateBoardTransform();
+      }
+
+      function addNote(x = null, y = null, type = 'normal') {
+        const point = x === null || y === null ? viewportCenterToBoardPoint() : { x, y };
+        const note = document.createElement('div');
+        note.className = `sticky-note${type === 'question' ? ' question' : ''}`;
+        note.style.left = `${point.x}px`;
+        note.style.top = `${point.y}px`;
+        // inner editable text area
+        const text = document.createElement('div');
+        text.className = 'note-text';
+        text.textContent = type === 'question' ? '질문 포스트잇' : `포스트잇 ${notes.length + 1}`;
+        text.contentEditable = 'false';
+        note.appendChild(text);
+        note.addEventListener('mousedown', startDrag);
+
+        // double-click to edit
+        text.addEventListener('dblclick', function(ev) {
+          ev.stopPropagation();
+          text.contentEditable = 'true';
+          note.isEditing = true;
+          text.focus();
+          // move caret to end
+          const range = document.createRange();
+          range.selectNodeContents(text);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        });
+
+        // finish editing on blur or Enter (without Shift)
+        text.addEventListener('blur', function() {
+          text.contentEditable = 'false';
+          note.isEditing = false;
+        });
+        text.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            text.blur();
+          }
+        });
+
+        boardContent.appendChild(note);
+
+        notes.push(note);
+        setNotePosition(note, point.x, point.y);
+      }
+
+      function startDrag(event) {
+        // allow clicks into contentEditable text to proceed normally
+        if (this.isEditing || (event.target && event.target.isContentEditable)) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Selection behavior on mousedown: Ctrl/Cmd toggles, Shift adds, otherwise select single
+        if (event.ctrlKey || event.metaKey) {
+          if (selected.has(this)) removeFromSelection(this);
+          else addToSelection(this);
+        } else if (event.shiftKey) {
+          if (!selected.has(this)) addToSelection(this);
+        } else {
+          if (!selected.has(this)) {
+            clearSelection();
+            addToSelection(this);
+          }
+        }
+
+        draggedNote = this;
+        panning = false;
+        dragStartPoint = screenToBoardPoint(event);
+        initialPositions.clear();
+        for (const n of selected) {
+          initialPositions.set(n, { x: Number(n.dataset.x || 0), y: Number(n.dataset.y || 0) });
+        }
+      }
+
+      wordItem.addEventListener('click', function (event) {
+        event.preventDefault();
+        addNote();
+      });
+
+      questionItem.addEventListener('click', function (event) {
+        event.preventDefault();
+        addNote(null, null, 'question');
+      });
+
+      board.addEventListener('mousedown', function (event) {
+        // left button: potential pan (starts after threshold)
+        if (event.button === 0) {
+          if (event.target === board) {
+            potentialPan = true;
+            panStartX = event.clientX;
+            panStartY = event.clientY;
+            panOriginX = camera.x;
+            panOriginY = camera.y;
+          } else if (event.target === boardContent) {
+            // begin marquee selection when clicking on empty board-content
+            startMarquee(event);
+          }
+          return;
+        }
+
+        // middle button (wheel): start immediate panning
+        if (event.button === 1) {
+          event.preventDefault();
+          potentialPan = false;
+          panning = true;
+          board.classList.add('dragging');
+          panStartX = event.clientX;
+          panStartY = event.clientY;
+          panOriginX = camera.x;
+          panOriginY = camera.y;
+          return;
+        }
+      });
+
+      board.addEventListener('mousemove', function (event) {
+        if (isMarquee) {
+          updateMarquee(event);
+          return;
+        }
+
+        // if we pressed on board and moved, start panning after threshold
+        if (potentialPan && !panning) {
+          const dx = Math.abs(event.clientX - panStartX);
+          const dy = Math.abs(event.clientY - panStartY);
+          if (dx >= panThreshold || dy >= panThreshold) {
+            panning = true;
+            potentialPan = false;
+            board.classList.add('dragging');
+            panOriginX = camera.x;
+            panOriginY = camera.y;
+          }
+        }
+
+        if (!draggedNote && panning) {
+          updatePan(event);
+        }
+      });
+
+      board.addEventListener('mouseup', function () {
+        if (isMarquee) {
+          endMarquee();
+        }
+        panning = false;
+        potentialPan = false;
+        board.classList.remove('dragging');
+      });
+
+      board.addEventListener('mouseleave', function () {
+        if (isMarquee) {
+          endMarquee();
+        }
+        panning = false;
+        potentialPan = false;
+        board.classList.remove('dragging');
+      });
+
+      board.addEventListener('wheel', function (event) {
+        event.preventDefault();
+        const rect = board.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        // world point under mouse before zoom
+        const worldX = (mouseX - camera.x) / camera.scale;
+        const worldY = (mouseY - camera.y) / camera.scale;
+
+        const delta = event.deltaY > 0 ? -0.1 : 0.1;
+        camera.scale = clamp(camera.scale + delta, 0.7, 2.2);
+
+        // move camera so that world point stays under mouse
+        camera.x = mouseX - worldX * camera.scale;
+        camera.y = mouseY - worldY * camera.scale;
+
+        updateBoardTransform();
+      }, { passive: false });
+
+      document.addEventListener('mousemove', function (event) {
+        if (!draggedNote) return;
+        const point = screenToBoardPoint(event);
+        const dx = point.x - dragStartPoint.x;
+        const dy = point.y - dragStartPoint.y;
+        for (const n of selected) {
+          const init = initialPositions.get(n) || { x: Number(n.dataset.x || 0), y: Number(n.dataset.y || 0) };
+          setNotePosition(n, init.x + dx, init.y + dy);
+        }
+      });
+
+      document.addEventListener('mouseup', function () {
+        draggedNote = null;
+        panning = false;
+        board.classList.remove('dragging');
+      });
+
+      // delete selected notes with Delete/Backspace (but ignore when editing)
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+          // if focus is inside an editable text area, ignore
+          const ae = document.activeElement;
+          if (ae && (ae.isContentEditable || (ae.classList && ae.classList.contains('note-text')))) return;
+
+          // if any selected note is in editing mode, ignore
+          for (const n of selected) {
+            if (n.isEditing) return;
+          }
+
+          if (selected.size === 0) return;
+          event.preventDefault();
+          for (const n of Array.from(selected)) {
+            const idx = notes.indexOf(n);
+            if (idx !== -1) notes.splice(idx, 1);
+            n.remove();
+            selected.delete(n);
+          }
+        }
+      });
+
+      updateBoardTransform();
+    </script>
+  </body>
+</html>
