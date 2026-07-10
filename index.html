@@ -104,6 +104,157 @@
         background: #e5e7eb;
       }
 
+      .ai-btn {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: 52px;
+        height: 52px;
+        border: none;
+        border-radius: 50%;
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        cursor: pointer;
+        z-index: 1000;
+      }
+
+      .ai-btn:hover {
+        background: #1d4ed8;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      .modal {
+        width: min(480px, calc(100% - 40px));
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+        overflow: hidden;
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f8fafc;
+      }
+
+      .modal-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .modal-close {
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        font-size: 1.1rem;
+        cursor: pointer;
+      }
+
+      .modal-body {
+        padding: 20px 24px 24px;
+        color: #374151;
+        line-height: 1.6;
+      }
+
+      .modal-body p {
+        margin: 0 0 12px;
+      }
+
+      .settings-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .settings-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .settings-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 0.95rem;
+      }
+
+      .settings-input-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .settings-toggle {
+        align-self: flex-start;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #374151;
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .settings-select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background: #ffffff;
+      }
+
+      .settings-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .settings-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .settings-btn.primary {
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .settings-btn.secondary {
+        background: #f3f4f6;
+        color: #374151;
+      }
+
       .content {
         padding: 24px;
         flex: 1;
@@ -207,8 +358,6 @@
         <nav class="nav-links">
           <a href="#" id="word-item">단어</a>
           <a href="#" id="question-item">질문</a>
-          <a href="#">메모</a>
-          <a href="#">캘린더</a>
         </nav>
       </aside>
 
@@ -217,8 +366,7 @@
           <div class="topbar-title">대시보드</div>
           <div class="topbar-actions">
             <button class="icon-btn" aria-label="파일">☰</button>
-            <button class="icon-btn" aria-label="설정">⚙</button>
-          </div>
+          <button id="settings-btn" class="icon-btn" aria-label="설정">⚙</button>
         </header>
 
         <section class="content">
@@ -229,6 +377,38 @@
           </div>
         </section>
       </main>
+      <button id="ai-btn" class="ai-btn" type="button" aria-label="AI 도움">🤖</button>
+      <div id="settings-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="settings-modal-title" class="modal-title">설정</h2>
+            <button id="settings-close" class="modal-close" aria-label="닫기">✕</button>
+          </div>
+          <div class="modal-body">
+            <form class="settings-form" id="settings-form">
+              <label class="settings-label" for="api-key-input">Google AI API Key</label>
+              <div class="settings-input-wrap">
+                <input id="api-key-input" class="settings-input" type="password" placeholder="API 키를 입력하세요" />
+                <button type="button" class="settings-toggle" id="api-key-toggle" aria-label="API 키 보기">API 키 표시</button>
+              </div>
+
+              <label class="settings-label" for="note-font-size">포스트잇 텍스트 크기</label>
+              <select id="note-font-size" class="settings-select">
+                <option value="12">12px</option>
+                <option value="14">14px</option>
+                <option value="16">16px</option>
+                <option value="18">18px</option>
+                <option value="20">20px</option>
+              </select>
+
+              <div class="settings-actions">
+                <button type="button" class="settings-btn secondary" id="settings-cancel">취소</button>
+                <button type="submit" class="settings-btn primary">저장</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -236,6 +416,64 @@
       const questionItem = document.getElementById('question-item');
       const board = document.getElementById('board');
       const boardContent = document.getElementById('board-content');
+      const settingsBtn = document.getElementById('settings-btn');
+      const settingsModal = document.getElementById('settings-modal');
+      const settingsClose = document.getElementById('settings-close');
+      const settingsCancel = document.getElementById('settings-cancel');
+      const settingsForm = document.getElementById('settings-form');
+      const apiKeyInput = document.getElementById('api-key-input');
+      const apiKeyToggle = document.getElementById('api-key-toggle');
+      const noteFontSizeSelect = document.getElementById('note-font-size');
+      const aiBtn = document.getElementById('ai-btn');
+
+      const STORAGE_KEY = 'idea-puzzle-google-ai-key';
+      const FONT_SIZE_KEY = 'idea-puzzle-note-font-size';
+      let googleApiKey = localStorage.getItem(STORAGE_KEY) || '';
+      let noteFontSize = Number(localStorage.getItem(FONT_SIZE_KEY) || '16');
+      let aiClient = null;
+
+      function createAiClient(apiKey) {
+        if (!apiKey) return null;
+        try {
+          if (window.GoogleGenAI) {
+            return new window.GoogleGenAI({ apiKey });
+          }
+          if (window.google && window.google.genai) {
+            return new window.google.genai.GoogleGenAI({ apiKey });
+          }
+          return null;
+        } catch (error) {
+          console.error('Failed to initialize Google AI client:', error);
+          return null;
+        }
+      }
+
+      if (googleApiKey) {
+        aiClient = createAiClient(googleApiKey);
+      }
+
+      apiKeyInput.value = googleApiKey;
+      noteFontSizeSelect.value = String(noteFontSize);
+
+      function applyNoteFontSize() {
+        document.documentElement.style.setProperty('--note-font-size', `${noteFontSize}px`);
+        for (const note of notes) {
+          const textEl = note.querySelector('.note-text');
+          if (textEl) {
+            textEl.style.fontSize = `${noteFontSize}px`;
+          }
+        }
+      }
+
+      function openSettings() {
+        apiKeyInput.value = googleApiKey;
+        noteFontSizeSelect.value = String(noteFontSize);
+        settingsModal.classList.add('active');
+      }
+
+      function closeSettings() {
+        settingsModal.classList.remove('active');
+      }
 
       const boardWidth = 5000;
       const boardHeight = 5000;
@@ -395,6 +633,119 @@
         updateBoardTransform();
       }
 
+      function getNoteText(note) {
+        return note?.querySelector('.note-text')?.textContent?.trim() || '';
+      }
+
+      function normalizeSuggestion(item) {
+        if (typeof item === 'string') {
+          const trimmed = item.trim();
+          if (!trimmed) return '';
+
+          return trimmed
+            .replace(/^['"“”‘’]+|['"“”‘’]+$/g, '')
+            .replace(/^\s*[-•]\s*/, '')
+            .replace(/^\s*"/, '')
+            .replace(/"\s*$/, '')
+            .trim();
+        }
+
+        if (item && typeof item === 'object') {
+          const values = Object.values(item)
+            .map((value) => String(value || '').trim())
+            .filter(Boolean);
+          return values.join(' / ');
+        }
+
+        return '';
+      }
+
+      function extractJsonPayload(text) {
+        const cleaned = String(text || '')
+          .replace(/```json|```/g, '')
+          .trim();
+
+        const candidates = [];
+        const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+        const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (arrayMatch) candidates.push(arrayMatch[0]);
+        if (objectMatch) candidates.push(objectMatch[0]);
+
+        for (const candidate of candidates) {
+          try {
+            return JSON.parse(candidate);
+          } catch (error) {
+            // try next candidate
+          }
+        }
+
+        return null;
+      }
+
+      async function generateAiSuggestions(rootText, contextTexts) {
+        if (!googleApiKey) {
+          openSettings();
+          throw new Error('API 키가 필요합니다.');
+        }
+
+        const prompt = `당신은 아이디어 확장 도우미입니다. 아래 루트 아이디어와 기존 보드 단어를 보고, 하나의 아이디어 프로젝트를 더 풍부하게 확장할 수 있는 단어 3개를 제안하세요. 한국어로만 답하고, 각 단어는 1~3단어로 작성하세요. 출력은 오직 JSON 배열 문자열만 반환하세요. 예시: {["게임", "플레이", "도전"]}.서두(예시: "Here is the JSON requested:"), 절대 설명 문구, 코드 블록, 번호, 또는 추가 텍스트를 포함하지 마세요.\n루트: ${rootText}\n컨텍스트: ${contextTexts.join('/')}`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(googleApiKey)}`, {
+          method: 'POST',
+          //headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              topP: 0.9,
+              maxOutputTokens: 220,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error?.message || 'AI 응답 실패');
+        }
+
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+        console.log('AI raw response:', rawText);
+
+        const parsed = extractJsonPayload(rawText);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .filter(Boolean)
+            .slice(0, 3)
+            .map(normalizeSuggestion)
+            .filter(Boolean);
+        }
+
+        const cleaned = String(rawText || '')
+          .replace(/```json|```/g, '')
+          .replace(/^\s*\[\s*/, '[')
+          .replace(/\s*\]\s*$/, ']')
+          .trim();
+        console.log('AI cleaned response:', cleaned);
+
+        const objectMatches = [...cleaned.matchAll(/\{[^{}]*\}/g)];
+        if (objectMatches.length > 0) {
+          const structured = objectMatches.map((match) => normalizeSuggestion(match[0])).filter(Boolean);
+          if (structured.length > 0) {
+            return structured.slice(0, 3);
+          }
+        }
+
+        const fallback = cleaned
+          .replace(/^\[|\]$/g, '')
+          .split(/\n|•|-|,|\s{2,}/)
+          .map(normalizeSuggestion)
+          .filter(Boolean)
+          .slice(0, 3);
+
+        return fallback;
+      }
+
       function addNote(x = null, y = null, type = 'normal') {
         const point = x === null || y === null ? viewportCenterToBoardPoint() : { x, y };
         const note = document.createElement('div');
@@ -404,6 +755,7 @@
         // inner editable text area
         const text = document.createElement('div');
         text.className = 'note-text';
+        text.style.fontSize = `${noteFontSize}px`;
         text.textContent = type === 'question' ? '질문 포스트잇' : `포스트잇 ${notes.length + 1}`;
         text.contentEditable = 'false';
         note.appendChild(text);
@@ -440,6 +792,7 @@
 
         notes.push(note);
         setNotePosition(note, point.x, point.y);
+        return note;
       }
 
       function startDrag(event) {
@@ -479,6 +832,72 @@
       questionItem.addEventListener('click', function (event) {
         event.preventDefault();
         addNote(null, null, 'question');
+      });
+
+      aiBtn.addEventListener('click', async function () {
+        const selectedNotes = Array.from(selected);
+        const contextNotes = selectedNotes.length > 0 ? selectedNotes : notes;
+        const rootNote = contextNotes[0];
+        const rootText = getNoteText(rootNote) || '아이디어';
+        const contextTexts = contextNotes.map(getNoteText).filter(Boolean);
+
+        if (contextTexts.length === 0) {
+          alert('먼저 포스트잇을 추가해 주세요.');
+          return;
+        }
+
+        aiBtn.disabled = true;
+        aiBtn.textContent = '…';
+
+        try {
+          const suggestions = await generateAiSuggestions(rootText, contextTexts);
+          const baseX = Number(rootNote?.dataset.x || 0);
+          const baseY = Number(rootNote?.dataset.y || 0);
+
+          suggestions.forEach((suggestion, index) => {
+            const offsetX = 220 + index * 40;
+            const offsetY = index % 2 === 0 ? -90 : 70;
+            const newNote = addNote(baseX + offsetX, baseY + offsetY);
+            const textEl = newNote.querySelector('.note-text');
+            if (textEl) {
+              textEl.textContent = suggestion;
+            }
+          });
+        } catch (error) {
+          console.error(error);
+          alert(error.message || 'AI 추천을 불러오지 못했습니다.');
+        } finally {
+          aiBtn.disabled = false;
+          aiBtn.textContent = '🤖';
+        }
+      });
+
+      apiKeyToggle.addEventListener('click', function () {
+        const isPassword = apiKeyInput.type === 'password';
+        apiKeyInput.type = isPassword ? 'text' : 'password';
+        apiKeyToggle.textContent = isPassword ? 'API 키 숨기기' : 'API 키 표시';
+      });
+
+      settingsBtn.addEventListener('click', openSettings);
+
+      settingsClose.addEventListener('click', closeSettings);
+      settingsCancel.addEventListener('click', closeSettings);
+
+      settingsForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        googleApiKey = apiKeyInput.value.trim();
+        noteFontSize = Number(noteFontSizeSelect.value) || 16;
+        localStorage.setItem(STORAGE_KEY, googleApiKey);
+        localStorage.setItem(FONT_SIZE_KEY, String(noteFontSize));
+        aiClient = createAiClient(googleApiKey);
+        applyNoteFontSize();
+        closeSettings();
+      });
+
+      settingsModal.addEventListener('click', function (event) {
+        if (event.target === settingsModal) {
+          closeSettings();
+        }
       });
 
       board.addEventListener('mousedown', function (event) {
